@@ -1,21 +1,24 @@
-import React from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import React, { useEffect, useState } from 'react';
+import { useSelector } from 'react-redux';
 
-import { getContacts, removeContact } from '../../redux/contactsSlice';
+import { useGetContactsQuery, useRemoveContactMutation } from '../../redux/contactsSlice';
 import { getFilter } from '../../redux/filterSlice';
 
 import { List, ListItem } from './ContactsList.styled';
 
 const ContactList = () => {
-  const dispatch = useDispatch();
-  const contacts = useSelector(getContacts);
+  const { data: contacts } = useGetContactsQuery(undefined);
+  const [removeContact, { isLoading: isDeleting }] = useRemoveContactMutation();
+  const [removedContactId, setRemovedContactId] = useState('');
   const filter = useSelector(getFilter);
 
-  const onContactDelete = (contactId: string) => {
-    dispatch(removeContact(contactId));
+  const onContactDelete = async (contactId: string) => {
+    removeContact(contactId);
+    setRemovedContactId(contactId);
   };
 
   const getFilteredContacts = () => {
+    if (!contacts) return;
     if (!filter) return [...contacts];
 
     const contactToLowerCase = filter.toLowerCase();
@@ -23,13 +26,19 @@ const ContactList = () => {
   };
   const filteredContacts = getFilteredContacts() || [];
 
+  useEffect(() => {
+    if (!isDeleting && removedContactId) setRemovedContactId('');
+  }, [removedContactId, isDeleting]);
+
   return (
     <List>
       {filteredContacts.map((contact, index) => (
         <ListItem key={contact.id}>
           <span>{index + 1}</span>
           {contact.name}, {contact.number}
-          <button onClick={() => onContactDelete(contact.id)}>delete</button>
+          <button type="button" onClick={() => onContactDelete(contact.id)} disabled={isDeleting}>
+            {contact.id === removedContactId ? 'deleting..' : 'delete'}
+          </button>
         </ListItem>
       ))}
     </List>

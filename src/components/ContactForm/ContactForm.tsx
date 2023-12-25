@@ -1,13 +1,11 @@
 import React from 'react';
-import { useDispatch, useSelector } from 'react-redux';
 import { Formik, Field, ErrorMessage, FormikHelpers } from 'formik';
 import { nanoid } from 'nanoid';
 import Notiflix from 'notiflix';
 import * as yup from 'yup';
 
-import { addContact, getContacts } from '../../redux/contactsSlice';
-
 import { Form } from './ContactsForm.styled';
+import { useAddContactMutation, useGetContactsQuery } from '../../redux/contactsSlice';
 
 const validationSchema = yup.object({
   name: yup.string().required('Name is required'),
@@ -26,8 +24,8 @@ const initialValues: ContactsInitialValues = {
 };
 
 const ContactForm = () => {
-  const dispatch = useDispatch();
-  const contacts = useSelector(getContacts);
+  const { data: contacts } = useGetContactsQuery(undefined);
+  const [addContact, { isLoading: isAddingContact }] = useAddContactMutation();
 
   const handleSubmit = (
     values: ContactsInitialValues,
@@ -41,8 +39,7 @@ const ContactForm = () => {
     if (existName) {
       return Notiflix.Notify.failure(`${name} is already in contacts.`);
     }
-
-    dispatch(addContact(values));
+    addContact(values);
     resetForm({ values: { ...initialValues, id: nanoid() } });
   };
 
@@ -65,7 +62,9 @@ const ContactForm = () => {
         <ErrorMessage name="number" component="div" />
         <br />
 
-        <button type="submit">Add Contact</button>
+        <button type="submit" disabled={isAddingContact}>
+          {isAddingContact ? 'Adding contact...' : 'Add Contact'}
+        </button>
       </Form>
     </Formik>
   );

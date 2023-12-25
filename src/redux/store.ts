@@ -2,7 +2,7 @@ import { combineReducers, configureStore } from '@reduxjs/toolkit';
 import { persistStore, persistReducer } from 'redux-persist';
 import storage from 'redux-persist/lib/storage';
 
-import { contactsSlice } from './contactsSlice';
+import { contactsApi } from './contactsSlice';
 import { filterSlice } from './filterSlice';
 
 const persistConfig = {
@@ -13,7 +13,7 @@ const persistConfig = {
 };
 
 const rootReducer = combineReducers({
-  contacts: contactsSlice.reducer,
+  [contactsApi.reducerPath]: contactsApi.reducer,
   filter: filterSlice.reducer,
 });
 
@@ -24,7 +24,7 @@ export const store = configureStore({
   middleware: getDefaultMiddleware =>
     getDefaultMiddleware({
       serializableCheck: false,
-    }),
+    }).concat(contactsApi.middleware),
 });
 
 export const persistor = persistStore(store);

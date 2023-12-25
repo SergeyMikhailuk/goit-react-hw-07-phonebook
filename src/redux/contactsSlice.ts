@@ -1,29 +1,32 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
-import { ContactsInitialValues } from 'components/ContactForm';
-
-import { RootState } from './store';
-
-const initialState: ContactsInitialValues[] = [
-  { id: 'id-1', name: 'Rosie Simpson', number: '459-12-56' },
-  { id: 'id-2', name: 'Hermione Kline', number: '443-89-12' },
-  { id: 'id-3', name: 'Eden Clements', number: '645-17-79' },
-  { id: 'id-4', name: 'Annie Copeland', number: '227-91-26' },
-];
-
-export const contactsSlice = createSlice({
-  name: 'contacts',
-  initialState,
-  reducers: {
-    addContact: (state, action: PayloadAction<ContactsInitialValues>) => {
-      state.push(action.payload);
-    },
-    removeContact: (state, action: PayloadAction<string>) => {
-      return state.filter(c => c.id !== action.payload);
-    },
-  },
+export const contactsApi = createApi({
+  reducerPath: 'contactsApi',
+  baseQuery: fetchBaseQuery({
+    baseUrl: 'https://6589aa24324d41715259505e.mockapi.io/api',
+  }),
+  tagTypes: ['Contacts'],
+  endpoints: build => ({
+    getContacts: build.query({
+      query: () => '/contacts',
+      providesTags: ['Contacts'],
+    }),
+    addContact: build.mutation({
+      query: contact => ({
+        url: '/contacts',
+        method: 'POST',
+        body: contact,
+      }),
+      invalidatesTags: ['Contacts'],
+    }),
+    removeContact: build.mutation({
+      query: contactId => ({
+        url: `/contacts/${contactId}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['Contacts'],
+    }),
+  }),
 });
 
-export const { addContact, removeContact } = contactsSlice.actions;
-
-export const getContacts = (state: RootState) => state.contacts;
+export const { useGetContactsQuery, useRemoveContactMutation, useAddContactMutation } = contactsApi;
